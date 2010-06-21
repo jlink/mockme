@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: Class Mocking</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: Class Mocking</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	var MyClass = Class.create({
+		initialize: function(name) {
+			this._name = name;
+		},
+		hello: function() {
+			return 'Hello, ' + this._name;
+		}
+	});
+	
+	MyClass.staticFun = function() {return 'staticFun'};
+	
+	var YourClass = Class.create(MyClass, {
+		helloDude: function() {
+			return this.hello() + ', dude';
+		},
+	});
+
+	
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			mocker = new Mocker();
+		}},
+		
+     	testMockClass: function() { with(this) {
+     		mocker.mockClass(MyClass);
+     		when(MyClass.staticFun)().thenReturn('stubbed');
+     		assertEqual('stubbed', MyClass.staticFun());
+     		when(MyClass.prototype.hello)().thenReturn('hello');
+     		var my = new MyClass('dr. who');
+     		verify(MyClass.prototype.initialize)('dr. who');
+     		assertEqual('hello', my.hello());
+     		MyClass.unmock();
+     		assertEqual('staticFun', MyClass.staticFun());
+     		my = new MyClass('dr. who');
+     		assertEqual('Hello, dr. who', my.hello());
+  		}},
+
+     	testThisInToDoIsBoundToMockObject: function() { with(this) {
+     		mocker.mockClass(MyClass);
+     		var my = new MyClass('dr. who');
+     		when(MyClass.prototype.hello)().thenDo(function() {
+     			assertIdentical(my, this);
+     			return 'hello';
+     		});
+     		assertEqual('hello', my.hello());
+     		MyClass.unmock();
+  		}},
+
+     	testMockSubclass: function() { with(this) {
+     		mocker.mockClass(YourClass);
+     		when(YourClass.prototype.helloDude)().thenReturn('dude');
+     		when(YourClass.prototype.hello)().thenReturn('hello');
+     		var your = new YourClass('dr. who');
+     		verify(YourClass.prototype.initialize)('dr. who');
+     		assertEqual('dude', your.helloDude());
+     		assertEqual('hello', your.hello());
+     		YourClass.unmock();
+     		your = new YourClass('dr. who');
+     		assertEqual('Hello, dr. who', your.hello());
+  		}},
+
+     	testMockerUse: function() { with(this) {
+     		mocker.useIn(function(mocker) {
+	     		mocker.mockClass(MyClass);
+	     		mocker.mockClass(YourClass);
+	     		new MyClass('any string');
+	     		verify(MyClass.prototype.initialize)(isOfType('string'));
+	     		when(YourClass.prototype.hello)().thenThrow({name: 'YourException'});
+	     		assertRaise('YourException', function() {new YourClass('me').hello()});
+     		});
+     		assertEqual('Hello, me', new YourClass('me').hello());
+  		}},
+
+     	testMockShorthand: function() { with(this) {
+			var mockedClass = mocker.mock(MyClass);
+     		when(MyClass.prototype.hello)().thenReturn('hello');
+     		var my = new MyClass('dr. who');
+     		verify(MyClass.prototype.initialize)('dr. who');
+     		MyClass.unmock(); 		
+     	}},
+     	
+     	testMockPlainClass: function() { with(this) {
+         	MyClass = function() {};
+         	MyClass.prototype = {hello: function() {}};
+         	var org = MyClass;
+			var MyClass = mocker.mock(MyClass);
+			//assignment is only needed if you want to verify the constructor call itself
+			assert(org !== MyClass); 
+     		when(MyClass.prototype.hello)().thenReturn('hello');
+     		var my = new MyClass('dr. who');
+     		verify(MyClass)('dr. who');
+     		MyClass.unmock();
+     		//then you have to reassign the original at the end of your test:
+     		MyClass = MyClass.original;
+     		assertIdentical(org, MyClass); 		
+     	}}
+ 		
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

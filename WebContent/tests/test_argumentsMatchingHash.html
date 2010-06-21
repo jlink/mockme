@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: ArgumentsMatchingHash</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: ArgumentsMatchingHash</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			hash = new ArgumentsMatchingHash(false);
+		}},
+		
+		testEmptyHash: function() { with(this) {
+			assertEqual(0, hash.size());
+			assertEqual(undefined, hash.get([1, 2]));
+		}},
+		
+		testSingleValue: function() { with(this) {
+			hash.set([1, 2], 'value');			
+			assertEqual(1, hash.size());
+			assertEqual('value', hash.get([1, 2]));
+			assertEqual(undefined, hash.get([2, 3]));
+		}},
+
+		testOverwriteValue: function() { with(this) {
+			hash.set([1, 2], 'value');			
+			hash.set([1, 2], 'new value');			
+			assertEqual(1, hash.size());
+			assertEqual('new value', hash.get([1, 2]));
+		}},
+
+		testSeveralValues: function() { with(this) {
+			hash.set([1, 2], '12');			
+			hash.set([], '');			
+			hash.set([3, 4, 5], '345');			
+			assertEqual(3, hash.size());
+			assertEqual('12', hash.get([1, 2]));
+			assertEqual('345', hash.get([3, 4, 5]));
+			assertEqual('', hash.get([]));
+			assertEqual(undefined, hash.get([4, 5, 3]));
+		}},
+
+		testNestedArrays: function() { with(this) {
+			hash.set([1, [2, 3]], '123');			
+			assertEqual('123', hash.get([1, [2, 3]]));
+			assertEqual(undefined, hash.get([[1, 2], 3]));
+		}},
+
+		testObjectsMatchByStructure: function() { with(this) {
+			hash.set([{}], '');			
+			hash.set([{a:1, b:2}], '12');			
+			hash.set([{a:1, b:3}], '13');			
+			assertEqual(3, hash.size());
+			assertEqual('', hash.get([{}]));
+			assertEqual('12', hash.get([{a:1, b:2}]));
+			assertEqual('13', hash.get([{a:1, b:3}]));
+			assertEqual(undefined, hash.get([{a:1, b:4}]));
+		}},
+		
+		testSameStructureDifferentConstructorDontMatch: function() { with(this) {
+			hash.set([{a:1}], '1');
+			var MyObj = function() {};
+			var myobj = new MyObj();
+			myobj.a = 1;
+			assertEqual(undefined, hash.get([myobj]));
+		}},
+
+		testMatcherInSearchArgs: function() { with(this) {
+			hash.set([{a:1}, 2, 3], '123');
+			hash.set([{a:1}], '1');
+			var trueMatcher = {match: function(obj) {return true}};
+			var falseMatcher = {match: function(obj) {return false}};
+			assertEqual('1', hash.get([trueMatcher]));
+			assertEqual(undefined, hash.get([falseMatcher]));
+			assertEqual(undefined, hash.get(falseMatcher));
+		}},
+		
+		testMatcherInStoredArgs: function() { with(this) {
+			hash = new ArgumentsMatchingHash(true);
+			var trueMatcher = {match: function(obj) {return true}};
+			var falseMatcher = {match: function(obj) {return false}};
+			hash.set([falseMatcher], 'f');
+			hash.set([trueMatcher], 't');
+			assertEqual('t', hash.get([1]));
+			assertEqual(undefined, hash.get([1, 2]));
+		}},
+
+		testReplaceMatchersInStoredArgs: function() { with(this) {
+			hash = new ArgumentsMatchingHash(true);
+			hash.set([anyString()], 'old');
+			hash.set([anyString()], 'new');
+			hash.set(['exact'], 'very new');
+			assertEqual('new', hash.get(['a string']));
+			assertEqual('very new', hash.get(['exact']));
+		}},
+		
+		testEachMatch: function() { with(this) {
+			hash.set([1], '1');
+			hash.set([2], '2');
+			hash.set([3], '3');
+			hash.set(['four'], '4');
+			var count = 0;
+			hash.eachMatch([isOfType('number')], function(pair) {
+				count++;
+				if (pair.key == 1) assertIdentical('1', pair.value);
+				if (pair.key == 2) assertIdentical('2', pair.value);
+				if (pair.key == 3) assertIdentical('3', pair.value);
+			});
+			assertEqual(3, count);
+		}}
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: Function Call Mocking</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: Function Call Mocking</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			mocker = new Mocker();
+		}},
+		
+     	testMockFunctionWithoutParameters: function() { with(this) {
+        	var f = mocker.mockFunction();
+        	assertEqual('anonymous-function', f.propName);
+        	assertEqual(null, f.original);
+        	assertEqual(null, f.container);
+ 		}},
+
+     	testMockFunctionWithNameOonly: function() { with(this) {
+        	var f = mocker.mockFunction('f');
+        	assertEqual('f', f.propName);
+        	assertEqual(null, f.original);
+        	assertEqual(null, f.container);
+ 		}},
+ 		
+     	testMockFunctionWithParameters: function() { with(this) {
+     		var g = function() {};
+     		g.test = 'test';
+     		var Container = {g: g};
+        	var f = mocker.mockFunction(Container, Container.g);
+        	assertEqual('g', f.propName);
+        	assertIdentical(g, f.original);
+        	assertIdentical(Container, f.container);
+ 		}},
+
+     	testCreateMockWithUnvalidParameters: function() { with(this) {
+     		var Container = {g: new Object()};
+        	assertRaise('Not a function', function() {mocker.mockFunction(Container, Container.g)});
+        	assertRaise('Function not in container', function() {mocker.mockFunction(Container, function() {})});
+ 		}},
+
+     	testWithinXMockOneFunction: function() { with(this) {
+     		var f = function() {};
+     		var g = function() {};
+     		var Container = {g: g, f: f};
+        	var mockedFunction = mocker.within(Container).mock(Container.g);
+        	assertIdentical(mockedFunction, Container.g);
+        	assertEqual('g', mockedFunction.propName);
+        	assertIdentical(g, Container.g.original);
+        	assertIdentical(Container, mockedFunction.container);
+        	assertIdentical(f, Container.f);
+ 		}},
+
+     	testWithinXMockOneFunctionByName: function() { with(this) {
+     		var g = function() {};
+     		var Container = {g: g};
+        	var mockedFunction = mocker.within(Container).mock('g');
+        	assertIdentical(mockedFunction, Container.g);
+        	assertEqual('g', mockedFunction.propName);
+ 		}},
+
+     	testWithinXMockOneFunctionFromPrototype: function() { with(this) {
+     		var g = function() {};
+     		var MyClass = Class.create({g: g});
+     		var Container = new MyClass();
+        	var mockedFunction = mocker.within(Container).mock('g');
+        	assertIdentical(mockedFunction, Container.g);
+        	assertEqual('g', mockedFunction.propName);
+        	assert(mockedFunction.originalFromPrototype);
+        	//mockedFunction.unmock();
+ 		}},
+
+     	testWithinXMockManyFunctions: function() { with(this) {
+     		var f = function() {};
+     		var g = function() {};
+     		var Container = {g: g, f: f};
+        	var mockedFunctions = mocker.within(Container).mock(Container.g, Container.f);
+        	assertEqual(2, mockedFunctions.size());
+        	assert(mockedFunctions.include(Container.f));
+        	assert(mockedFunctions.include(Container.g));
+ 		}},
+
+     	testWithinXMockManyFunctionsByName: function() { with(this) {
+     		var f = function() {};
+     		var g = function() {};
+     		var Container = {g: g, f: f};
+        	var mockedFunctions = mocker.within(Container).mock('f', 'g');
+        	assertEqual(2, mockedFunctions.size());
+        	assert(mockedFunctions.include(Container.f));
+        	assert(mockedFunctions.include(Container.g));
+ 		}},
+ 		
+     	testUnmock: function() { with(this) {
+     		var g = function() {return 'g'};
+     		var Container = {g: g};
+        	var mockedFunction = mocker.within(Container).mock(Container.g);
+        	mockedFunction.unmock();
+        	assertIdentical(g, Container.g);
+ 		}},
+
+     	testUnmockAll: function() { with(this) {
+     		var g = function() {return 'g'};
+     		var ContainerA = {a: g};
+     		var ContainerB = {b: g};
+     		mocker.mockFunction();
+        	mocker.within(ContainerA).mock(ContainerA.a);
+        	mocker.within(ContainerB).mock(ContainerB.b);
+        	mocker.unmockAll();
+        	assertIdentical(g, ContainerA.a);
+        	assertIdentical(g, ContainerB.b);
+        	mocker.unmockAll(); // should do no harm
+ 		}},
+
+     	testMockerUseIn: function() { with(this) {
+     		var ContainerA = {a: function() {return 'a'}};
+     		var ContainerB = {b: function() {return 'b'}};
+        	var count = 0;
+        	mocker.useIn(function(aMocker) {
+	        	aMocker.within(ContainerA).mock('a');
+	        	aMocker.within(ContainerB).mock('b');
+        		when(ContainerA.a)().thenReturn('x');
+        		when(ContainerB.b)().thenReturn('y');
+	        	assertEqual('x', ContainerA.a());
+	        	assertEqual('y', ContainerB.b());
+	        	count++;
+        	});
+        	assertEqual(1, count);
+        	assertEqual('a', ContainerA.a());
+        	assertEqual('b', ContainerB.b());
+ 		}}
+ 		
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

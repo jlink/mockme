@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: Verify Function Calls</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: Verify Function Calls</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			mocker = new Mocker();
+        	f = mocker.mockFunction();
+		}},
+		
+		testVerifyCallsSucceed: function() { with(this) {
+	    	f();
+	    	f(1, 2);
+	    	verify(f)();
+	    	verify(f)(1, 2);
+		}},
+
+		testVerifyTwoDifferentFunctions: function() { with(this) {
+	    	var g = mocker.mockFunction();
+	    	f(1, 2);
+	    	verify(f)(1, 2);
+			assertRaise('Verify call error', function() { verify(g)(1,2) });
+		}},
+
+		testVerifyCallFails: function() { with(this) {
+			assertRaise('Verify call error', function() { verify(f)(1,2) });
+		}},
+
+		testVerifyWithStub: function() { with(this) {
+			when(f)('three', 2, '1').thenReturn('321');
+			assertEqual('321', f('three', 2, '1'));
+			verify(f)('three', 2, '1');
+		}},
+		
+		testVerifyNumberOfPlainCalls: function() { with(this) {
+			verify(times(0), f)();
+			verify(never(), f)();
+			f();
+			verify(times(1), f)();
+			verify(once(), f)();
+			f();
+			verify(times(2), f)();
+			f();
+			f();
+			f();
+			verify(times(5), f)();
+		}},
+
+		testVerifyNumberOfCallsWithParameters: function() { with(this) {
+			verify(never(), f)(1, 'two');
+			f(1, 'two');
+			verify(once(), f)(1, 'two');
+			f(1, 'two');
+			verify(times(2), f)(1, 'two');
+			verify(atLeast(1), f)(1, 'two');
+			verify(atLeastOnce(), f)(1, 'two');
+		}},
+
+		testVerifyNumberOfCallsUsingMatchers: function() { with(this) {
+			verify(never(), f)(isOfType('number'), isOfType('string'));
+			f(1, 'two');
+			verify(once(), f)(isOfType('number'), isOfType('string'));
+			f(1, 'two');
+			f(2.5, 'three');
+			f('one', 2); //does not match
+			f(1); //does not match
+			verify(times(3), f)(isOfType('number'), isOfType('string'));
+			verify(times(4), f)(any(), any());
+		}}
+ 		
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

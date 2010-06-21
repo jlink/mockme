@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: Stub Function Calls</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: Stub Function Calls</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			mocker = new Mocker();
+        	f = mocker.mockFunction();
+		}},
+		
+    	testStubSingleCallReturnsValue: function() { with(this) {
+        	when(f)().thenReturn('a string');
+        	assertEqual('a string', f());
+ 		}},
+
+    	testMockShorthand: function() { with(this) {
+    		var x = mocker.mock();
+        	when(x)().thenReturn('x files');
+        	assertEqual('x files', x());
+ 		}},
+
+ 		testStubThenDo: function() { with(this) {
+ 	 		when(f)(1, 'two').thenDo(function() {
+ 	 			assertEqual(2, $A(arguments).size());
+ 	 			assertEqual(1, arguments[0]);
+ 	 			assertEqual('two', arguments[1]);
+ 	 			return 'oh yeah!';
+ 	 		});
+        	assertEqual('oh yeah!', f(1, 'two'));
+ 		}},
+
+    	testStubTwoDifferentFunctions: function() { with(this) {
+        	when(f)(1).thenReturn('f');
+        	var g = mocker.mockFunction();
+        	when(g)(1).thenReturn('g');
+        	assertEqual('f', f(1));
+        	assertEqual('g', g(1));
+ 		}},
+
+    	testStubSeveralCallsReturnValues: function() { with(this) {
+        	when(f)().thenReturn('a string');
+        	when(f)(1).thenReturn('another string');
+        	when(f)(1, 'two').thenReturnNothing();
+        	assertEqual('another string', f(1));
+        	assertEqual(undefined, f(1, 'two'));
+        	assertEqual('a string', f());
+ 		}},
+ 		
+    	testLastStubOverridesPreviousStub: function() { with(this) {
+        	when(f)(1, 2).thenReturn('a string');
+        	when(f)(1, 2).thenReturn('another string');
+        	assertEqual('another string', f(1, 2));
+ 		}},
+ 		
+    	testUnstubbedCallReturnsNothing: function() { with(this) {
+        	assertEqual(undefined, f(1, 2));
+ 		}},
+ 		
+    	testTwoMockersHaveDifferentStubSets: function() { with(this) {
+        	when(f)(1).thenReturn('one');
+        	mocker = new Mocker();
+        	f = mocker.mockFunction();
+        	assertEqual(undefined, f(1));
+ 		}},
+
+ 		testCannotStubUnmockedFunction: function() { with(this) {
+ 	 		var g = {}; 
+        	assertRaise('Not a function', function() { when(g)() });
+        	var h = function() {};
+        	assertRaise('Not a mock', function() { when(h)() });
+ 		}},
+
+ 		testSingleCallThrowsException: function() { with(this) {
+ 	 		when(f)(1).thenThrow({name: 'my error'});
+ 	 		assertRaise('my error', function() { f(1) }); 
+ 		}},
+
+ 		testThrowsCancelsReturns: function() { with(this) {
+ 	 		when(f)(1).thenReturn({name: 'my error'});
+ 	 		when(f)(1).thenThrow({name: 'my error'});
+ 	 		assertRaise('my error', function() { f(1) }); 
+ 		}}
+
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

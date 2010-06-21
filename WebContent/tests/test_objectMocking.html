@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: Object Mocking</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: Object Mocking</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	var MyClass = Class.create({
+		initialize: function(name) {
+			this._name = name;
+		},
+		hello: function() {
+			return 'Hello, ' + this._name;
+		}
+	});
+	
+	var YourClass = Class.create(MyClass, {
+		helloDude: function() {
+			return this.hello() + ', dude';
+		},
+	});
+
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			object = {
+				a: function() {return 'a'},
+				b: function() {return 'b'},
+				c: 'c',
+				d: {}
+			}
+			mocker = new Mocker();
+			mock = mocker.mockObject(object);
+		}},
+		
+     	testMockObject: function() { with(this) {
+     		assertIdentical(mock, object);
+     		when(mock.a)(1).thenReturn('one');
+     		assertEqual('one', object.a(1));
+     		object.a(2);
+     		verify(object.a)(2);
+  		}},
+
+     	testUnmockObject: function() { with(this) {
+     		mock.unmock();
+     		assertEqual('a', object.a(1));
+  		}},
+
+     	testClassBasedObject: function() { with(this) {
+     		var my = new MyClass('Frank');
+     		mocker.mockObject(my);
+     		when(my.hello)().thenReturn('oops');
+     		assertEqual('oops', my.hello());
+     		my.unmock();
+     		assertEqual('Hello, Frank', my.hello());
+     		var org = MyClass.prototype.hello;
+     		MyClass.prototype.hello = function() {return 'changed'};
+     		assertEqual('changed', my.hello());
+     		MyClass.prototype.hello = org;
+  		}},
+
+     	testClassBasedObjectWithInheritance: function() { with(this) {
+     		var your = new YourClass('Frank');
+     		mocker.mockObject(your);
+     		when(your.hello)().thenReturn('oops');
+     		when(your.helloDude)().thenReturn('oops oops');
+     		assertEqual('oops', your.hello());
+     		assertEqual('oops oops', your.helloDude());
+     		your.unmock();
+     		assertEqual('Hello, Frank', your.hello());
+     		assertEqual('Hello, Frank, dude', your.helloDude());
+     		var org = YourClass.prototype.helloDude;
+     		YourClass.prototype.helloDude = function() {return 'dude changed'};
+     		assertEqual('dude changed', your.helloDude());
+     		YourClass.prototype.helloDude = org;
+  		}},
+
+     	testMockPrototypeObject: function() { with(this) {
+     		mocker.useIn(function(mocker) {
+     			mocker.within(MyClass.prototype).mock('initialize');
+     			when(MyClass.prototype.initialize)('a name').thenDo(function(name) {
+         			assert(this instanceof MyClass);
+         		});
+         		new MyClass('a name');
+         		verify(MyClass.prototype.initialize)('a name');
+         	});
+     		assertEqual('Hello, Frank', new MyClass('Frank').hello());
+  		}},
+
+  		testMockerUse: function() { with(this) {
+     		var helper = {helpMe: function() {return 'Catch the rope!'}}
+     		mocker.useIn(function(mocker) {
+     			mocker.mockObject(helper);
+     			when(helper.helpMe)().thenReturn('I can´t!');
+     			assertEqual('I can´t!', helper.helpMe());
+     		});
+   			assertEqual('Catch the rope!', helper.helpMe());
+  		}},
+  		
+     	testMockShorthand: function() { with(this) {
+     		var helper = {helpMe: function() {return 'Catch the rope!'}}
+     		mocker.mock(helper)
+   			when(helper.helpMe)().thenReturn('I can´t!');
+   			assertEqual('I can´t!', helper.helpMe());
+  		}},
+ 		
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

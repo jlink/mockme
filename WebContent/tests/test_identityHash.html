@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: IdentityHash</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: IdentityHash</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			hash = new IdentityHash();
+			f = function() {};
+		}},
+		
+		testEmptyHash: function() { with(this) {
+			assertEqual(0, hash.size());
+			assertEqual(undefined, hash.get(f));
+		}},
+		
+		testSingleValue: function() { with(this) {
+			hash.set(f, 'value');			
+			assertEqual(1, hash.size());
+			assertEqual('value', hash.get(f));
+			assertEqual(undefined, hash.get(function(){}));
+		}},
+
+		testOverwriteValue: function() { with(this) {
+			hash.set(f, 'value');			
+			hash.set(f, 'other value');			
+			assertEqual(1, hash.size());
+			assertEqual('other value', hash.get(f));
+		}},
+
+		testSeveralValues: function() { with(this) {
+			var o = {};
+			var a = [];
+			var g = function(){};
+			hash.set(f, 'f');			
+			hash.set(g, 'g');			
+			hash.set(o, 'o');			
+			hash.set(a, 'a');
+			assertEqual(4, hash.size());
+			assertEqual('f', hash.get(f));
+			assertEqual('g', hash.get(g));
+			assertEqual('o', hash.get(o));
+			assertEqual('a', hash.get(a));
+			assertEqual(undefined, hash.get(function(){}));
+			assertEqual(undefined, hash.get({}));
+			assertEqual(undefined, hash.get([]));
+		}},
+		
+		testEach: function() { with(this) {
+			var g = function(){};
+			hash.set(f, 'f');			
+			hash.set(g, 'g');
+			var count = 0;
+			hash.each(function(each) {
+				count++;
+				assert(each.key === f || each.key === g);
+				assert(each.value === 'f' || each.value === 'g');
+			});
+			assertEqual(2, count);
+		}}
+
+		
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

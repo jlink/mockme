@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: Interface Mocking</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: Interface Mocking</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	var MyClass = Class.create({
+		initialize: function(name) {
+			this._name = name;
+		},
+		hello: function() {
+			return 'Hello, ' + this._name;
+		}
+	});
+
+	var MyInterface = Interface.create('oops', 'hello');	
+	
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			mocker = new Mocker();
+		}},
+		
+     	testMockInterfaceFromClass: function() { with(this) {
+     		var myMock = mocker.mockInterface(MyClass);
+     		myMock.initialize('oops');
+     		verify(myMock.initialize)('oops');
+     		when(myMock.hello)().thenReturn('hello');
+     		assertEqual('hello', myMock.hello());
+     		
+     		var my = new MyClass('the doctor');
+     		assertEqual('Hello, the doctor', my.hello());
+  		}},
+
+     	testMockInterface: function() { with(this) {
+     		var myMock1 = mocker.mockInterface(MyInterface);
+     		var myMock2 = mocker.mockInterface(MyInterface);
+     		myMock1.oops('oops1');
+     		myMock2.oops('oops2');
+     		verify(myMock1.oops)('oops1');
+     		verify(myMock2.oops)('oops2');
+     		when(myMock1.hello)().thenReturn('hello1');
+     		when(myMock2.hello)().thenReturn('hello2');
+     		assertEqual('hello1', myMock1.hello());
+     		assertEqual('hello2', myMock2.hello());
+  		}},
+
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

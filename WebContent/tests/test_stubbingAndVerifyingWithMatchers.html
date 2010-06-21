@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>MockMe Unit Tests: Stub &amp; Verify with Matchers</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<script src="../js/prototype.js" type="text/javascript"></script>
+<script src="../js/scriptaculous/unittest.js" type="text/javascript"></script>
+<script src="../js/mockme.js" type="text/javascript"></script>
+<link rel="stylesheet" href="test.css" type="text/css" />
+</head>
+<body>
+<h1>MockMe Unit Tests: Stub &amp; Verify with Matchers</h1>
+
+<!-- Log output -->
+<div id="testlog"></div>
+
+<!-- Tests follow -->
+<script type="text/javascript" language="javascript" charset="utf-8">
+// <![CDATA[
+
+	new Test.Unit.Runner({
+
+		setup: function() { with(this) {
+			mocker = new Mocker();
+        	f = mocker.mockFunction();
+			nothingMatcher = {match: function(obj) {return false}};
+		}},
+		
+		testStubWithMatcher: function() { with(this) {
+			when(f)(1, nothingMatcher).thenReturn('1f');
+			when(f)(1, any()).thenReturn('1t');
+			assertEqual('1t', f(1, 2));
+			assertEqual('1t', f(1, 'three'));
+			when(f)(1, any()).thenReturn('2t');
+			assertEqual('2t', f(1, 2));
+		}},
+
+		testVerifyWithMatcher: function() { with(this) {
+			f(1, 2);
+			verify(f)(any(), 2);
+			verify(f)(any(), any());
+			assertRaise('Verify call error', function() { 
+				verify(f)(2, any());
+			});		
+		}}
+	});
+  
+// ]]>
+</script>
+</body>
+</html>

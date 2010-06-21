@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head> 
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<link rel="stylesheet" type="text/css" media="screen" href="css/screen.css"/>
+	<link rel="stylesheet" type="text/css" media="screen" href="css/english.css"/>
+	<link rel="stylesheet" type="text/css" media="print" href="css/print.css"/>
+	<link type="text/css" rel="stylesheet" media="screen" href="css/prettify.css" />
+	<link rel="shortcut icon" href="images/favicon.ico"/>
+	<script type="text/javascript" src="js/prettify.js"></script>
+	<title>MockMe for JavaScript</title>
+</head>
+<body onload="prettyPrint()">
+
+<div id="header">
+	<div><h1>MockMe for JavaScript</h1></div>
+	<div><h2>Framework for Mocking and Stubbing</h2></div>
+</div>
+
+<div id="content">
+	<div class="summary">
+	  	<p>There are a couple of mock frameworks for JavaScript but none really did what I needed. So I took my testing
+	  	problems, some inspiration from <a href="http://code.google.com/p/mockito/">mockito</a> and a few days off 
+	  	to write MockMe.</p>
+	  	<ul>
+		  <li><a href="downloads/mockme-0.9beta2.js">mockme-0.9beta2.js</a></li>
+		  <li><a href="#philosophy">Philosophy</a></li>
+		  <li><a href="#howto">How to use it</a></li>
+		  <li><a href="#changes">Release Notes</a></li>
+		  <li><a href="#issues">Open Issues</a></li>
+		  <li><a href="#license">License</a></li>
+		  <li><a href="mailto:mockme@johanneslink.net">Report a bug, ask for a feature, give feedback</a></li>
+	  	</ul>
+	</div>
+	<div class="text">
+		<h3 id="philosophy">The Philosophy</h3>
+		
+			There are two blog posts (<a href="http://blog.johanneslink.net/2008/08/08/ajax-travelogue-part-6-mocking-in-javascript/">1</a>, 
+			<a href="http://blog.johanneslink.net/2008/08/09/ajax-travelogue-part-7-mockme/">2</a>) describing my motivation to develop and publish MockMe.
+			
+			<p>
+			<b>First Aspect:</b> JavaScript is different. That's why JavaScript requires a different type of mock framework.
+			Since functions are the basic building block of JavaScript, functions should also be the basic building 
+			block for stubbing &amp; mocking. Of course, we also want to mock, objects - or parts of them - and classes.
+			And yes, creating mock objects that conform to a class or an interface - the way you usually use
+			mock objects in Java - should also be possible.
+			</p>
+
+			<p>
+			<b>Second Aspect:</b> While using <a href="http://code.google.com/p/mockito/">mockito</a> in Java 
+			after many years of being a passionate <a href="http://www.easymock.org/">EasyMock</a> advocate, 
+			I have learned that
+			Mockito's way to handle verification of calls after the fact - instead of specifying expectations before -
+			suits my style of test-driven development best. Thus, strictly speaking MockMe should be more 
+			of a spying framework than a mocking framework.
+			</p>
+
+		<h3><a id="howto"></a>How to Use It</h3>
+		
+		<h4>Installation</h4>
+		<ol>
+			<li>Download <a href="../downloads/mockme/mockme-0.9beta2.js">mockme-0.9beta2.js</a></li>
+			<li>Download a recent version of <a href="http://www.prototypejs.org/">prototype</a></li>
+			<li>Include both files like you do with other JavaScript libraries</li>
+			<li>Use it! For example in your 
+				<a href="http://github.com/madrobby/scriptaculous/wikis/unit-testing">JavaScript unit tests</a>.
+			</li>
+		</ol>
+
+		<h4>Creating a mocker</h4>
+		
+		A mocker is the object that gives you access to most of MockMe's functionality.
+<pre class="prettyprint lang-js">
+var mocker = new Mocker();
+</pre>
+		That's it. You'll see later that often you even don't need to do that.
+		
+		<h4>Mocking a function</h4>
+		
+		If you need a mock function to hand it to some other object, so this:
+<pre class="prettyprint lang-js">
+var mocker = new Mocker();
+var f = mocker.mockFunction();
+//or even simpler:
+var f = mocker.mock();
+</pre>
+Mind that <code class="prettyprint lang-js">mock()</code> has many uses, it usually tries to figure out what you want.
+
+		<h4>Stubbing &amp; verifying calls to a function</h4>
+
+<pre class="prettyprint lang-js">
+//default is to return undefined:
+assertEqual(undefined, f('in'));
+
+when(f)('in').thenReturn('out');
+assertEqual('out', f('in'));
+</pre>
+You can stub to throw exceptions:
+<pre class="prettyprint lang-js">
+when(f)('in').thenThrow({name: 'MypersonalException'});
+f('in'); // will throw exception
+</pre>
+Or to any behaviour you like:
+<pre class="prettyprint lang-js">
+when(f)('hello').thenDo(function(param) {
+    alert(param);
+});
+f('hello'); // will open the alert window with text 'hello'
+</pre>
+
+That's easy. Verifying is exactly as easy:
+<pre class="prettyprint lang-js">
+f('aString');
+verify(f)('aString'); //  Will succeed
+verify(f)('anotherString'); //  Will throw an exception
+</pre>
+
+		<h4>Stubbing &amp; verifying compares the structure of objects</h4>
+<pre class="prettyprint lang-js">
+when(f)({name: 'hello'}).thenReturn('yeah');
+assertEqual('yeah', f({name: 'hello'}));
+assertEqual(undefined, f({name: 'hola'}));
+</pre>
+
+		<h4>Matchers make stubbing &amp; verifying easier</h4>
+<pre class="prettyprint lang-js">
+when(f)(any()).thenReturn('yeah');
+assertEqual('yeah', f(1));
+assertEqual('yeah', f('two'));
+assertEqual('yeah', f([1, 2]));
+assertEqual('yeah', f({key: 'value'}));
+</pre>
+
+		Other matchers you have are <code class="prettyprint lang-js">isInstanceOf(aConstructor)</code>, <code class="prettyprint lang-js">isOfType(aType)</code>, 
+		<code class="prettyprint lang-js">anyString()</code>, <code class="prettyprint lang-js">anyNumber()</code>, <code class="prettyprint lang-js">isSame(aValue)</code> and
+		<code class="prettyprint lang-js">contains(anElementOrObject)</code>. The last one works for collections and objects.
+		
+		<h4>Verify the number of calls</h4>
+<pre class="prettyprint lang-js">
+f(1); f(2); f(1); f('three');
+
+verify(once(), f)(2); //succeeds
+verify(once(), f)(1); //fails
+verify(times(2), f)(1); //succeeds
+verify(atLeast(1), f)(1); //succeeds
+verify(atLeastOnce(), f)(2); //succeeds, this is the default
+verify(times(3), f)(anyNumber()); //magic!
+</pre>
+
+		<h4>Matching existing objects</h4>
+		
+		Consider you have an existing global objects:
+<pre class="prettyprint lang-js">
+var MyObject = {
+    f1: function() {return 1},
+    f2: function() {return this.f1() + 2}
+}
+</pre>
+		You can either mock it fully like that:
+<pre class="prettyprint lang-js">
+mocker.mock(MyObject); //The magic mock() again
+when(MyObject.f1)().thenReturn('whatever');
+verify(MyObject.f2)();
+</pre>
+		or Partially:
+<pre class="prettyprint lang-js" style="width:46em">
+mocker.within(MyObject).mock('f1'); //Also supports many function names
+when(MyObject.f1)().thenReturn(5);
+assertEqual(7, MyObject.f2()); // f2() keeps its original functionality!
+</pre>	
+		And afterwards you want to restore your global object:
+<pre class="prettyprint lang-js">
+MyObject.unmock(); //Restores a single mocked object
+
+// Alternatively:
+mocker.unmockAll(); //Restores all mocks created by this mocker
+
+assertEqual(3, MyObject.f2()); // No more mocking
+</pre>
+
+		<h4>Life without a mocker object</h4>
+		You can live without explicitly creating mocker objects. Let's take the previous example:
+
+<pre class="prettyprint lang-js">
+var MyObject = {
+    f1: function() {return 1},
+    f2: function() {return this.f1() + 2}
+}
+
+useMockerFor(function(mocker)) {
+    mocker.within(MyObject).mock('f1'); 
+    when(MyObject.f1)().thenReturn(5);
+    assertEqual(7, MyObject.f2());
+} // Here everything you mocked will automatically be restored
+
+assertEqual(3, MyObject.f2()); 
+</pre>
+
+Alternatively you can do things like that:
+<pre class="prettyprint lang-js">
+var MyObject = {...}
+var YourObject = {...}
+var MyClass = function() {...}
+MyClass.prototype = {f: function() {}}
+
+mock(MyObject, YourObject, MyClass).andDo(function(mocker)) {
+	var my = new MyClass();
+	my.f(1, 2, 3);
+	verify(MyClass.prototype.f)(1, 2, 3);
+} // auto restore
+</pre>
+		This example also showed you how to mock a class, i.e. a constructor function.
+
+		<h4>Stub out or spy on classes</h4>
+		Stub out or spy on classes without having to create a mock instance first:
+<pre class="prettyprint lang-js">
+var MyClass = Class.create({ //Class is from PrototypeJS
+    initialize: function() {}
+    f: function() {}
+});
+
+mocker.mockClass(MyClass);
+when(MyClass.prototype.f)().thenReturn('oops');
+var myInstance = new MyClass(42);
+assertEqual('oops', myInstance.f());
+verify(MyClass.prototype.initialize)(42);
+</pre>
+
+		<h4>Creating mocks for an interface or a class that serves as an interface</h4>
+		Create a mock object which implements all methods from a class:
+<pre class="prettyprint lang-js">
+var MyClass = function() {}
+MyClass.prototype = {f: function() {}}
+
+var myMock = mocker.mockInterface(MyClass);
+when(myMock.f)().thenReturn('oops');
+</pre>
+		To make up an interface on the fly:
+<pre class="prettyprint lang-js" style="width:52em">
+var MyInterface = Interface.create('f', 'g', 'h'); //Interface is defined by MockMe
+var myMock = mocker.mockInterface(MyInterface); //has three functions: f, g &amp; h
+</pre>
+		
+		<h4>Stuff missing in this documentation</h4>
+		
+		Quite a bit of details and hidden features. Enjoy!
+		
+		<h3><a name="issues"></a>Open Issues</h3>
+		<ul>
+			<li>
+			Dependency on <a href="http://www.prototypejs.org/">prototype</a>. 
+			This can interfere with other libraries you'd like to use.
+			</li>
+			<li>
+			I'm fighting with some terms of MockMe's DSSML (domain specific stubbing & mocking language).
+			Please give me your suggestions!
+			</li>
+			<li>
+			Stubbing &amp; verifying calls in a certain order is not supported yet.
+			</li>
+		</ul>
+
+		<h3><a name="changes"></a>Release Notes</h3>
+		
+		<h4>Version 0.9 beta 2 <span class="date">2008-08-07</span></h4>
+		After a discussion with one of the Mockito guys at Agile 2008, I changed the stubbing syntax:
+		<table>
+			<thead>
+				<tr><th>New Version</th><th>Old Version</th></tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><code class="prettyprint lang-js">when(fun)(params). thenReturn(value)</code></td>
+					<td><code class="prettyprint lang-js">stub(fun)(params). toReturn(value)</code></td> 	
+				</tr>
+				<tr>
+					<td><code class="prettyprint lang-js">when(fun)(params). thenReturnNothing()</code></td>
+					<td><code class="prettyprint lang-js">stub(fun)(params). toReturnNothing()</code></td> 	
+				</tr>
+				<tr>
+					<td><code class="prettyprint lang-js">when(fun)(params). thenThrow(exception)</code></td>
+					<td><code class="prettyprint lang-js">stub(fun)(params). toThrow(exception)</code></td> 	
+				</tr>
+				<tr>
+					<td><code class="prettyprint lang-js">when(fun)(params).thenDo(closure)</code></td>
+					<td><code class="prettyprint lang-js">stub(fun)(params).toDo(closure)</code></td> 	
+				</tr>
+			</tbody>
+		</table>
+
+		<h4>Version 0.9 beta <span class="date">2008-07-29</span></h4>
+		<ul>
+			<li>
+				First public version. I'm trying to collect feedback and see if MockMe is interesting to others at all.
+			</li>
+		</ul>
+
+		<h3><a name="license"></a>License</h3>
+		MockMe is published under <a target="_blank" href="http://www.gnu.org/licenses/lgpl.html">LGPL version 3</a>. 
+		The concrete license might change in the future, but MockMe will remain freely available.
+
+	</div>
+</div>
+
+<div id="footer">
+	Copyright © 2006-2009 <a href="http://johanneslink.net/english">Johannes Link</a>. 
+</div>
+
+</body>
+</html>
